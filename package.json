@@ -4,6 +4,8 @@
   "description": "PicGo plugin for Go File.",
   "main": "src/index.js",
   "scripts": {
+    "login": "npm login --registry https://registry.npmjs.org",
+    "publish": "npm publish --registry https://registry.npmjs.org"
   },
   "keywords": [
     "picgo",
