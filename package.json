@@ -1,0 +1,21 @@
+{
+  "name": "picgo-plugin-gofile",
+  "version": "0.1.0",
+  "description": "PicGo plugin for Go File.",
+  "main": "src/index.js",
+  "scripts": {
+  },
+  "keywords": [
+    "picgo",
+    "picgo-gui-plugin",
+    "picgo-plugin",
+    "picgo-gofile",
+    "gofile"
+  ],
+  "author": "JustSong",
+  "license": "MIT",
+  "homepage": "https://github.com/songquanpeng/picgo-plugin-gofile",
+  "bugs": {
+    "url": "https://github.com/songquanpeng/picgo-plugin-gofile/issues"
+  }
+}
