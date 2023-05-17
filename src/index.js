@@ -28,7 +28,7 @@ module.exports = (ctx) => {
 
         const postConfig = {
           method: 'POST',
-          url: url,
+          url: url + "/api/image",
           headers: {
             'Content-Type': 'multipart/form-data',
             'Authorization': `Bearer ${token}`,
@@ -44,12 +44,12 @@ module.exports = (ctx) => {
           }
         }
 
-        let body = await ctx.Request.request(postConfig)
-
+        let res = await ctx.Request.request(postConfig);
+        res = JSON.parse(res);
         delete imgList[i].base64Image
         delete imgList[i].buffer
 
-        imgList[i]['imgUrl'] = body
+        imgList[i]['imgUrl'] = `${url}/image/${res.data[0]}`;
       }
     } catch (err) {
       ctx.emit('notification', {
@@ -70,8 +70,8 @@ module.exports = (ctx) => {
         type: 'input',
         default: userConfig.url,
         required: true,
-        message: 'API地址',
-        alias: 'API地址'
+        message: 'API 地址',
+        alias: 'API 地址'
       },
       {
         name: 'token',
