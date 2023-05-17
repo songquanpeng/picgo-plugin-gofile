@@ -1,81 +1,91 @@
-const axios = require('axios');
-
 module.exports = (ctx) => {
   const register = () => {
     ctx.helper.uploader.register('go-file', {
       handle,
       name: 'Go File',
-      config: configFunc,
-      requiredFields: ['apiUrl', 'token'],
-    });
-  };
+      config: config
+    })
+  }
 
-  const configFunc = (ctx) => {
-    const config = ctx.getConfig('picBed.go-file');
+  const handle = async function (ctx) {
+    let userConfig = ctx.getConfig('picBed.go-file')
+    if (!userConfig) {
+      throw new Error('找不到上传配置')
+    }
+    let url = userConfig.url
+    if (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1)
+    }
+    const token = userConfig.token
+
+    try {
+      let imgList = ctx.output
+      for (let i in imgList) {
+        let image = imgList[i].buffer
+        if (!image && imgList[i].base64Image) {
+          image = Buffer.from(imgList[i].base64Image, 'base64')
+        }
+
+        const postConfig = {
+          method: 'POST',
+          url: url,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`,
+            'User-Agent': 'PicGo'
+          },
+          formData: {
+            image: {
+              value: image,
+              options: {
+                filename: imgList[i].fileName
+              }
+            }
+          }
+        }
+
+        let body = await ctx.Request.request(postConfig)
+
+        delete imgList[i].base64Image
+        delete imgList[i].buffer
+
+        imgList[i]['imgUrl'] = body
+      }
+    } catch (err) {
+      ctx.emit('notification', {
+        title: '上传失败',
+        body: JSON.stringify(err)
+      })
+    }
+  }
+
+  const config = ctx => {
+    let userConfig = ctx.getConfig('picBed.go-file')
+    if (!userConfig) {
+      userConfig = {}
+    }
     return [
       {
-        name: 'apiUrl',
+        name: 'url',
         type: 'input',
-        default: config.apiUrl || '',
+        default: userConfig.url,
         required: true,
-        message: 'Enter the Go File API URL',
+        message: 'API地址',
+        alias: 'API地址'
       },
       {
         name: 'token',
         type: 'input',
-        default: config.token || '',
+        default: userConfig.token,
         required: true,
-        message: 'Enter the Go File API Token',
-      },
-    ];
-  };
+        message: 'Bear Token',
+        alias: 'Bear Token'
+      }
+    ]
+  }
 
-  const handle = async (ctx) => {
-    const { apiUrl, token } = ctx.getConfig('picBed.go-file');
-    const { imgList } = ctx;
-    const promises = [];
-
-    for (const img of imgList) {
-      const formData = new FormData();
-      formData.append('image', img.buffer);
-
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      };
-
-      const options = {
-        method: 'POST',
-        url: apiUrl + "/api/image",
-        headers,
-        data: formData,
-      };
-
-      const promise = axios(options)
-        .then((response) => {
-          const data = response.data;
-          if (data.success) {
-            return data.url;
-          } else {
-            throw new Error(`Failed to upload image: ${data.message}`);
-          }
-        })
-        .catch((error) => {
-          throw new Error(`Failed to upload image: ${error.message}`);
-        });
-
-      promises.push(promise);
-    }
-
-    const results = await Promise.all(promises);
-
-    ctx.emit('notification', {
-      title: 'Upload Complete',
-      body: 'Images have been successfully uploaded to Go File',
-    });
-
-    return results;
-  };
-
-  register();
-};
+  return {
+    uploader: 'go-file',
+    register
+  }
+}
